@@ -4,22 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lista zakupów</title>
-  <meta name="description" content="Domowa lista zakupów z trybem sklepu, podpowiedziami produktów i automatycznym przypisywaniem kategorii." />
+  <meta name="description" content="Domowa lista zakupów — wspólna dla całej rodziny." />
   <meta name="theme-color" content="#f9f8f6" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#18181a" media="(prefers-color-scheme: dark)" />
-
-  <!-- PWA -->
+  <meta name="theme-color" content="#18181a"  media="(prefers-color-scheme: dark)" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
-  <!-- Ikony Tabler -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
-
-  <!-- Czcionka -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
-
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -32,52 +24,51 @@
       <i class="ti ti-shopping-cart" aria-hidden="true"></i>
       Lista zakupów
     </div>
-    <div class="mode-toggle" role="group" aria-label="Tryb widoku">
-      <button class="mode-btn active" id="btnList" aria-pressed="true">
-        <i class="ti ti-list" aria-hidden="true"></i> Lista
-      </button>
-      <button class="mode-btn" id="btnShop" aria-pressed="false">
-        <i class="ti ti-basket" aria-hidden="true"></i> Sklep
-      </button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <!-- Wskaźnik połączenia -->
+      <div style="display:flex;align-items:center;gap:5px" title="Status połączenia z bazą">
+        <span id="connDot" style="width:7px;height:7px;border-radius:50%;background:#e24b4a;flex-shrink:0;transition:background .3s"></span>
+        <span id="connLabel" style="font-size:11px;color:var(--text-2)">łączenie…</span>
+      </div>
+      <div class="mode-toggle" role="group" aria-label="Tryb widoku">
+        <button class="mode-btn active" id="btnList" aria-pressed="true">
+          <i class="ti ti-list" aria-hidden="true"></i> Lista
+        </button>
+        <button class="mode-btn" id="btnShop" aria-pressed="false">
+          <i class="ti ti-basket" aria-hidden="true"></i> Sklep
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- Filtry sklepów -->
   <nav class="store-tabs" id="storeTabs" aria-label="Filtruj po sklepie"></nav>
 
-  <!-- Pasek podsumowania -->
+  <!-- Podsumowanie -->
   <div class="summary-strip" id="summaryStrip" aria-live="polite"></div>
 
-  <!-- ── TRYB LISTA ─────────────────────────────────────────────────────────── -->
+  <!-- ── TRYB LISTA ──────────────────────────────────────────────────────────── -->
   <section id="listSection">
 
-    <!-- Panel dodawania produktu -->
     <div class="add-panel" role="form" aria-label="Dodaj produkt">
       <div class="add-row">
         <div class="name-wrap">
-          <input
-            type="text"
-            id="inputName"
-            placeholder="Wpisz produkt…"
-            autocomplete="off"
-            aria-label="Nazwa produktu"
-            aria-autocomplete="list"
-            aria-controls="acDrop"
-          />
+          <input type="text" id="inputName" placeholder="Wpisz produkt…"
+            autocomplete="off" aria-label="Nazwa produktu"
+            aria-autocomplete="list" aria-controls="acDrop" />
           <div class="ac-drop" id="acDrop" role="listbox" aria-label="Podpowiedzi"></div>
         </div>
         <input type="number" id="inputQty" value="1" min="1" max="99" aria-label="Ilość" />
       </div>
       <div class="add-row">
         <select id="inputStore" aria-label="Sklep"></select>
-        <select id="inputCat" aria-label="Kategoria"></select>
+        <select id="inputCat"   aria-label="Kategoria"></select>
         <button class="primary" id="btnAdd">
           <i class="ti ti-plus" aria-hidden="true"></i> Dodaj
         </button>
       </div>
     </div>
 
-    <!-- Pasek narzędzi -->
     <div class="toolbar">
       <div class="toolbar-left">
         <button class="btn-sm" id="btnClearDone">
@@ -92,12 +83,11 @@
       </div>
     </div>
 
-    <!-- Panel słownika użytkownika (domyślnie ukryty) -->
     <div class="dict-panel hidden" id="dictPanel">
       <h3>Moje produkty w słowniku</h3>
       <div class="dict-tag-list" id="dictTagList"></div>
       <div class="dict-add-row">
-        <input type="text" id="dictName" placeholder="Nazwa produktu…" aria-label="Nowy produkt do słownika" />
+        <input type="text" id="dictName" placeholder="Nazwa produktu…" aria-label="Nowy produkt" />
         <select id="dictCatSelect" aria-label="Kategoria"></select>
         <button class="primary" id="btnDictAdd">
           <i class="ti ti-plus" aria-hidden="true"></i> Dodaj
@@ -105,22 +95,18 @@
       </div>
     </div>
 
-    <!-- Produkty pogrupowane po kategoriach -->
     <div id="itemsList" aria-live="polite" aria-label="Lista produktów"></div>
 
   </section>
 
-  <!-- ── TRYB SKLEPU ────────────────────────────────────────────────────────── -->
+  <!-- ── TRYB SKLEPU ─────────────────────────────────────────────────────────── -->
   <section id="shopSection" class="hidden">
-
     <div class="shop-header" id="shopProgress" aria-live="polite"></div>
     <div id="shopList" aria-live="polite" aria-label="Produkty do kupienia"></div>
-
   </section>
 
 </div>
 
-<!-- Toast powiadomienie -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module" src="js/app.js"></script>
