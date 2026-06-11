@@ -1,8 +1,9 @@
 {
   "name": "Lista zakupów",
   "short_name": "Zakupy",
-  "description": "Domowa lista zakupów z trybem sklepu i podpowiedziami produktów",
-  "start_url": "/",
+  "description": "Domowa lista zakupów — wspólna dla całej rodziny",
+  "start_url": "/zakupy/",
+  "scope": "/zakupy/",
   "display": "standalone",
   "background_color": "#f9f8f6",
   "theme_color": "#f9f8f6",
