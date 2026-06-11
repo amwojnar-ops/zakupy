@@ -8,6 +8,13 @@
   <meta name="theme-color" content="#f9f8f6" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#18181a"  media="(prefers-color-scheme: dark)" />
   <link rel="manifest" href="manifest.json" />
+
+  <!-- iOS PWA — wymagane żeby działało po dodaniu do ekranu głównego -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Zakupy" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,7 +32,6 @@
       Lista zakupów
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <!-- Wskaźnik połączenia -->
       <div style="display:flex;align-items:center;gap:5px" title="Status połączenia z bazą">
         <span id="connDot" style="width:7px;height:7px;border-radius:50%;background:#e24b4a;flex-shrink:0;transition:background .3s"></span>
         <span id="connLabel" style="font-size:11px;color:var(--text-2)">łączenie…</span>
