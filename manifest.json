@@ -1,0 +1,24 @@
+{
+  "name": "Lista zakupów",
+  "short_name": "Zakupy",
+  "description": "Domowa lista zakupów z trybem sklepu i podpowiedziami produktów",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f8f6",
+  "theme_color": "#f9f8f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
