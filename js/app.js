@@ -108,9 +108,14 @@ document.addEventListener('click', e => {
 async function createList() {
   const name = $('newListName').value.trim();
   if (!name) { $('newListName').focus(); return; }
-  const id = meta.nextListId;
+
+  // bezpieczne ID — weź max z istniejących lub z meta
+  const existingListIds = Object.values(lists).map(l => Number(l.id) || 0);
+  const id = Math.max(meta.nextListId ?? 1, ...existingListIds, 0) ;
+
   const list = { id, name, createdAt: Date.now() };
-  meta.nextListId++;
+  meta.nextListId  = id + 1;
+  meta.nextId      = meta.nextId ?? 1;
   await saveMeta(meta);
   await saveList(list);
   $('newListName').value = '';
@@ -130,14 +135,20 @@ async function doDeleteList(id) {
 async function addItem() {
   const name = $('inputName').value.trim();
   if (!name) { $('inputName').focus(); return; }
+
+  // bezpieczne ID
+  const existingItemIds = Object.values(items).map(i => Number(i.id) || 0);
+  const id = Math.max(meta.nextId ?? 1, ...existingItemIds, 0);
+
   const item = {
-    id: meta.nextId, listId: activeListId, name,
+    id, listId: activeListId, name,
     qty:   $('inputQty').value || '1',
     store: $('inputStore').value,
     cat:   $('inputCat').value,
     done:  false, addedAt: Date.now(),
   };
-  meta.nextId++;
+  meta.nextId      = id + 1;
+  meta.nextListId  = meta.nextListId ?? 1;
   await saveMeta(meta);
   await saveItem(item);
   $('inputName').value = ''; $('inputQty').value = '1';
