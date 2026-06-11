@@ -7,16 +7,15 @@ import {
   removeDictItem, saveMeta,
 } from './firebase.js';
 
-// ─── Stan lokalny (tylko UI, źródło prawdy jest Firebase) ─────────────────────
-let items          = [];
+// ─── Stan ─────────────────────────────────────────────────────────────────────
+let items           = [];
 let customDictItems = [];
-let nextId         = 1;
-let activeStore    = 'all';
-let mode           = 'list';
-let acIdx          = -1;
-let connected      = false;   // czy Firebase odpowiedział
+let nextId          = 1;
+let activeStore     = 'all';
+let mode            = 'list';   // 'list' | 'shop' | 'dict'
+let screen          = 'home';   // 'home' | 'app'
+let acIdx           = -1;
 
-// ─── DOM helpers ──────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -29,14 +28,32 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-// ─── Wskaźnik połączenia ──────────────────────────────────────────────────────
+// ─── Połączenie ───────────────────────────────────────────────────────────────
 function setConnected(ok) {
-  connected = ok;
-  const dot = $('connDot');
-  const lbl = $('connLabel');
-  if (!dot) return;
-  dot.style.background  = ok ? '#22c55e' : '#e24b4a';
-  lbl.textContent       = ok ? 'połączono' : 'łączenie…';
+  ['connDot','connDot2'].forEach(id => {
+    const d = $(id);
+    if (d) d.style.background = ok ? '#22c55e' : '#e24b4a';
+  });
+  ['connLabel','connLabel2'].forEach(id => {
+    const l = $(id);
+    if (l) l.textContent = ok ? 'połączono' : 'łączenie…';
+  });
+}
+
+// ─── Nawigacja ekranów ────────────────────────────────────────────────────────
+function goHome() {
+  screen = 'home';
+  $('homeScreen').classList.remove('hidden');
+  $('appScreen').classList.add('hidden');
+  renderHome();
+}
+
+function goApp(targetMode) {
+  screen = 'app';
+  mode = targetMode ?? 'list';
+  $('homeScreen').classList.add('hidden');
+  $('appScreen').classList.remove('hidden');
+  render();
 }
 
 // ─── Selekty ──────────────────────────────────────────────────────────────────
@@ -104,42 +121,36 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.name-wrap')) { $('acDrop').style.display = 'none'; acIdx = -1; }
 });
 
-// ─── Dodaj produkt → Firebase ─────────────────────────────────────────────────
+// ─── Akcje ────────────────────────────────────────────────────────────────────
 async function addItem() {
   const name = $('inputName').value.trim();
   if (!name) { $('inputName').focus(); return; }
   const item = {
-    id:    nextId,
-    name,
+    id: nextId, name,
     qty:   $('inputQty').value || '1',
     store: $('inputStore').value,
     cat:   $('inputCat').value,
     done:  false,
     addedAt: Date.now(),
   };
-  // optymistyczne UI — Firebase potwierdzi za chwilę
   nextId++;
   await saveMeta({ nextId });
   await saveItem(item);
-
   $('inputName').value = '';
   $('inputQty').value  = '1';
   $('acDrop').style.display = 'none';
   $('inputName').focus();
 }
 
-// ─── Przełącz status → Firebase ──────────────────────────────────────────────
 async function toggleDone(id) {
   const it = items.find(i => i.id === id);
   if (it) await updateItem(id, { done: !it.done });
 }
 
-// ─── Usuń produkt → Firebase ──────────────────────────────────────────────────
 async function doDeleteItem(id) {
   await deleteItem(id);
 }
 
-// ─── Usuń kupione → Firebase ──────────────────────────────────────────────────
 async function doClearDone() {
   const doneIds = items.filter(i => i.done).map(i => i.id);
   if (!doneIds.length) { showToast('Brak kupionych produktów'); return; }
@@ -147,13 +158,11 @@ async function doClearDone() {
   showToast(`Usunięto ${doneIds.length} ${doneIds.length === 1 ? 'produkt' : 'produktów'}`);
 }
 
-// ─── Kopiuj listę ─────────────────────────────────────────────────────────────
 function doCopy() {
   const ok = exportToClipboard(items, activeStore);
   showToast(ok ? 'Lista skopiowana do schowka' : 'Brak produktów do skopiowania');
 }
 
-// ─── Tryb widoku ──────────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
   $('btnList').classList.toggle('active', m === 'list');
@@ -163,7 +172,6 @@ function setMode(m) {
   render();
 }
 
-// ─── Sklep ────────────────────────────────────────────────────────────────────
 function setStore(id) {
   activeStore = id;
   render();
@@ -173,7 +181,6 @@ function filteredItems() {
   return activeStore === 'all' ? items : items.filter(i => i.store === activeStore);
 }
 
-// ─── Słownik użytkownika → Firebase ──────────────────────────────────────────
 async function addDictItem() {
   const name = $('dictName').value.trim();
   const cat  = $('dictCatSelect').value;
@@ -191,7 +198,41 @@ async function doRemoveDictItem(name) {
 }
 window._removeDict = doRemoveDictItem;
 
-// ─── Render helpers ───────────────────────────────────────────────────────────
+// ─── Render: ekran główny ─────────────────────────────────────────────────────
+function renderHome() {
+  const rem   = items.filter(i => !i.done).length;
+  const total = items.length;
+
+  // liczniki per sklep
+  const storeCounts = STORES.map(s => ({
+    ...s,
+    count: items.filter(i => i.store === s.id && !i.done).length,
+  })).filter(s => s.count > 0);
+
+  const pills = storeCounts.map(s =>
+    `<span class="home-pill" style="background:${s.dot}22;color:${s.dot}">${s.label} ${s.count}</span>`
+  ).join('');
+
+  const now  = new Date();
+  const days = ['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+  const months = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+
+  $('homeDate').textContent   = dateStr;
+  $('homeTileCount').textContent = rem;
+  $('homeTileSub').textContent   = total > 0
+    ? `${total} produktów łącznie`
+    : 'Lista jest pusta';
+  $('homePills').innerHTML = pills || `<span style="font-size:12px;opacity:.5">brak produktów</span>`;
+
+  // dict count
+  const dictTotal = customDictItems.length;
+  $('homeDictSub').textContent = dictTotal > 0
+    ? `${dictTotal} własnych wpisów`
+    : 'brak własnych wpisów';
+}
+
+// ─── Render: store tabs ───────────────────────────────────────────────────────
 function renderStoreTabs() {
   const el = $('storeTabs');
   el.innerHTML = '';
@@ -308,6 +349,7 @@ function renderDictTags() {
 }
 
 function render() {
+  if (screen === 'home') { renderHome(); return; }
   renderStoreTabs();
   const fi = filteredItems();
   renderSummary(fi);
@@ -320,7 +362,7 @@ function render() {
   $('shopSection').classList.toggle('hidden', mode !== 'shop');
 }
 
-// ─── Subskrypcja Firebase — aktualizacje w czasie rzeczywistym ────────────────
+// ─── Firebase ─────────────────────────────────────────────────────────────────
 function initFirebase() {
   setConnected(false);
   subscribeToData(({ type, items: newItems, customDict, meta }) => {
@@ -336,6 +378,23 @@ function initFirebase() {
 function init() {
   buildSelects();
 
+  // home tiles
+  $('tileList').addEventListener('click',  () => goApp('list'));
+  $('tileShop').addEventListener('click',  () => goApp('shop'));
+  $('tileDict').addEventListener('click',  () => {
+    goApp('list');
+    setTimeout(() => {
+      const p = $('dictPanel');
+      p.classList.remove('hidden');
+      $('btnDictToggle').querySelector('i').className = 'ti ti-book-open';
+      p.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  });
+
+  // back button
+  $('btnBack').addEventListener('click', goHome);
+
+  // app controls
   $('inputName').addEventListener('input',   onNameInput);
   $('inputName').addEventListener('keydown', onNameKey);
   $('btnAdd').addEventListener('click',       addItem);

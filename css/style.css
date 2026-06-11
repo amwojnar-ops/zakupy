@@ -475,3 +475,79 @@ button.primary:active { opacity: .7; transform: scale(.98); }
   .add-row { flex-wrap: wrap; }
   input[type="number"] { width: 60px; }
 }
+
+/* ── Ekran główny ──────────────────────────────────────────────────────────── */
+#homeScreen { padding: 1.25rem 1rem 2rem; }
+
+.home-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.home-date  { font-size: 12px; color: var(--text-2); margin-bottom: 2px; }
+.home-title { font-size: 22px; font-weight: 600; letter-spacing: -.4px; color: var(--text); }
+
+.conn-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #e24b4a; flex-shrink: 0; transition: background .3s; }
+.conn-lbl { font-size: 11px; color: var(--text-2); }
+
+.home-tile {
+  width: 100%;
+  border-radius: 20px;
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  transition: opacity .15s, transform .1s;
+  margin-bottom: .75rem;
+  position: relative;
+  overflow: hidden;
+}
+.home-tile:active { opacity: .85; transform: scale(.98); }
+
+.tile-icon-wrap { font-size: 32px; margin-bottom: .75rem; }
+.tile-icon-sm   { font-size: 28px; margin-bottom: .6rem; display: block; }
+.tile-label     { font-size: 20px; font-weight: 600; letter-spacing: -.3px; }
+.tile-count     { font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin: .2rem 0 .1rem; }
+.tile-sub       { font-size: 13px; opacity: .7; }
+.tile-pills     { display: flex; flex-wrap: wrap; gap: 5px; margin-top: .75rem; }
+.home-pill      { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+.tile-arr       { font-size: 18px; opacity: .45; position: absolute; bottom: 1rem; right: 1.25rem; }
+
+.home-row { display: flex; gap: .75rem; }
+.tile-half { flex: 1; margin-bottom: 0; }
+
+.tile-green { background: #1a2e10; color: #8fd45a; }
+.tile-green .tile-sub { color: #4d8a2a; }
+.tile-blue  { background: #0d2340; color: #6ab0f5; }
+.tile-blue  .tile-sub { color: #3a7abf; }
+.tile-amber { background: #2d1e05; color: #f0b860; }
+.tile-amber .tile-sub { color: #9a6520; }
+
+@media (prefers-color-scheme: light) {
+  .tile-green { background: #EAF3DE; color: #27500A; }
+  .tile-green .tile-sub { color: #3B6D11; }
+  .tile-green .home-pill { background: rgba(59,109,17,.12); color: #27500A; }
+  .tile-blue  { background: #E6F1FB; color: #0C447C; }
+  .tile-blue  .tile-sub { color: #185FA5; }
+  .tile-amber { background: #FAEEDA; color: #633806; }
+  .tile-amber .tile-sub { color: #854F0B; }
+}
+
+/* ── Przycisk Wstecz ──────────────────────────────────────────────────────── */
+.btn-back {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-back:hover { background: var(--bg); }

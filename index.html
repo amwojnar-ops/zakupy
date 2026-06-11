@@ -6,15 +6,12 @@
   <title>Lista zakupów</title>
   <meta name="description" content="Domowa lista zakupów — wspólna dla całej rodziny." />
   <meta name="theme-color" content="#f9f8f6" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#18181a"  media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#18181a" media="(prefers-color-scheme: dark)" />
   <link rel="manifest" href="manifest.json" />
-
-  <!-- iOS PWA — wymagane żeby działało po dodaniu do ekranu głównego -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Zakupy" />
   <meta name="mobile-web-app-capable" content="yes" />
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,96 +22,135 @@
 
 <div class="app" role="main">
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="topbar-title">
-      <i class="ti ti-shopping-cart" aria-hidden="true"></i>
-      Lista zakupów
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="display:flex;align-items:center;gap:5px" title="Status połączenia z bazą">
-        <span id="connDot" style="width:7px;height:7px;border-radius:50%;background:#e24b4a;flex-shrink:0;transition:background .3s"></span>
-        <span id="connLabel" style="font-size:11px;color:var(--text-2)">łączenie…</span>
+  <!-- ══ EKRAN GŁÓWNY ══════════════════════════════════════════════════════════ -->
+  <div id="homeScreen">
+
+    <header class="home-header">
+      <div>
+        <div id="homeDate" class="home-date"></div>
+        <div class="home-title">Lista zakupów</div>
       </div>
-      <div class="mode-toggle" role="group" aria-label="Tryb widoku">
-        <button class="mode-btn active" id="btnList" aria-pressed="true">
-          <i class="ti ti-list" aria-hidden="true"></i> Lista
-        </button>
-        <button class="mode-btn" id="btnShop" aria-pressed="false">
-          <i class="ti ti-basket" aria-hidden="true"></i> Sklep
-        </button>
+      <div class="conn-row">
+        <span id="connDot" class="conn-dot"></span>
+        <span id="connLabel" class="conn-lbl">łączenie…</span>
       </div>
+    </header>
+
+    <!-- Kafel główny: Do kupienia -->
+    <button class="home-tile tile-green" id="tileList" aria-label="Przejdź do listy zakupów">
+      <div class="tile-icon-wrap">
+        <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+      </div>
+      <div class="tile-content">
+        <div class="tile-label">Do kupienia</div>
+        <div class="tile-count" id="homeTileCount">0</div>
+        <div class="tile-sub" id="homeTileSub">produktów</div>
+      </div>
+      <div class="tile-pills" id="homePills"></div>
+      <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+    </button>
+
+    <!-- Dolny rząd: Sklepy + Słownik -->
+    <div class="home-row">
+      <button class="home-tile tile-blue tile-half" id="tileShop" aria-label="Tryb sklepu">
+        <i class="ti ti-building-store tile-icon-sm" aria-hidden="true"></i>
+        <div class="tile-label">Sklepy</div>
+        <div class="tile-sub">tryb zakupów</div>
+        <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+      </button>
+      <button class="home-tile tile-amber tile-half" id="tileDict" aria-label="Słownik produktów">
+        <i class="ti ti-book tile-icon-sm" aria-hidden="true"></i>
+        <div class="tile-label">Słownik</div>
+        <div class="tile-sub" id="homeDictSub">produkty i kat.</div>
+        <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+      </button>
     </div>
-  </header>
 
-  <!-- Filtry sklepów -->
-  <nav class="store-tabs" id="storeTabs" aria-label="Filtruj po sklepie"></nav>
+  </div>
 
-  <!-- Podsumowanie -->
-  <div class="summary-strip" id="summaryStrip" aria-live="polite"></div>
+  <!-- ══ EKRAN APLIKACJI ════════════════════════════════════════════════════════ -->
+  <div id="appScreen" class="hidden">
 
-  <!-- ── TRYB LISTA ──────────────────────────────────────────────────────────── -->
-  <section id="listSection">
-
-    <div class="add-panel" role="form" aria-label="Dodaj produkt">
-      <div class="add-row">
-        <div class="name-wrap">
-          <input type="text" id="inputName" placeholder="Wpisz produkt…"
-            autocomplete="off" aria-label="Nazwa produktu"
-            aria-autocomplete="list" aria-controls="acDrop" />
-          <div class="ac-drop" id="acDrop" role="listbox" aria-label="Podpowiedzi"></div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-back" id="btnBack" aria-label="Wróć do ekranu głównego">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div class="topbar-title">
+          <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+          Lista zakupów
         </div>
-        <input type="number" id="inputQty" value="1" min="1" max="99" aria-label="Ilość" />
       </div>
-      <div class="add-row">
-        <select id="inputStore" aria-label="Sklep"></select>
-        <select id="inputCat"   aria-label="Kategoria"></select>
-        <button class="primary" id="btnAdd">
-          <i class="ti ti-plus" aria-hidden="true"></i> Dodaj
-        </button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="conn-row">
+          <span id="connDot2" class="conn-dot"></span>
+          <span id="connLabel2" class="conn-lbl">łączenie…</span>
+        </div>
+        <div class="mode-toggle" role="group" aria-label="Tryb widoku">
+          <button class="mode-btn active" id="btnList" aria-pressed="true">
+            <i class="ti ti-list" aria-hidden="true"></i> Lista
+          </button>
+          <button class="mode-btn" id="btnShop" aria-pressed="false">
+            <i class="ti ti-basket" aria-hidden="true"></i> Sklep
+          </button>
+        </div>
       </div>
-    </div>
+    </header>
 
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <button class="btn-sm" id="btnClearDone">
-          <i class="ti ti-trash" aria-hidden="true"></i> Usuń kupione
-        </button>
-        <button class="btn-sm" id="btnCopy">
-          <i class="ti ti-copy" aria-hidden="true"></i> Kopiuj listę
-        </button>
-        <button class="btn-sm" id="btnDictToggle" title="Mój słownik produktów">
-          <i class="ti ti-book" aria-hidden="true"></i> Słownik
-        </button>
+    <nav class="store-tabs" id="storeTabs" aria-label="Filtruj po sklepie"></nav>
+    <div class="summary-strip" id="summaryStrip" aria-live="polite"></div>
+
+    <section id="listSection">
+      <div class="add-panel" role="form" aria-label="Dodaj produkt">
+        <div class="add-row">
+          <div class="name-wrap">
+            <input type="text" id="inputName" placeholder="Wpisz produkt…"
+              autocomplete="off" aria-label="Nazwa produktu"
+              aria-autocomplete="list" aria-controls="acDrop" />
+            <div class="ac-drop" id="acDrop" role="listbox" aria-label="Podpowiedzi"></div>
+          </div>
+          <input type="number" id="inputQty" value="1" min="1" max="99" aria-label="Ilość" />
+        </div>
+        <div class="add-row">
+          <select id="inputStore" aria-label="Sklep"></select>
+          <select id="inputCat" aria-label="Kategoria"></select>
+          <button class="primary" id="btnAdd">
+            <i class="ti ti-plus" aria-hidden="true"></i> Dodaj
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="dict-panel hidden" id="dictPanel">
-      <h3>Moje produkty w słowniku</h3>
-      <div class="dict-tag-list" id="dictTagList"></div>
-      <div class="dict-add-row">
-        <input type="text" id="dictName" placeholder="Nazwa produktu…" aria-label="Nowy produkt" />
-        <select id="dictCatSelect" aria-label="Kategoria"></select>
-        <button class="primary" id="btnDictAdd">
-          <i class="ti ti-plus" aria-hidden="true"></i> Dodaj
-        </button>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="btn-sm" id="btnClearDone"><i class="ti ti-trash" aria-hidden="true"></i> Usuń kupione</button>
+          <button class="btn-sm" id="btnCopy"><i class="ti ti-copy" aria-hidden="true"></i> Kopiuj listę</button>
+          <button class="btn-sm" id="btnDictToggle"><i class="ti ti-book" aria-hidden="true"></i> Słownik</button>
+        </div>
       </div>
-    </div>
 
-    <div id="itemsList" aria-live="polite" aria-label="Lista produktów"></div>
+      <div class="dict-panel hidden" id="dictPanel">
+        <h3>Moje produkty w słowniku</h3>
+        <div class="dict-tag-list" id="dictTagList"></div>
+        <div class="dict-add-row">
+          <input type="text" id="dictName" placeholder="Nazwa produktu…" aria-label="Nowy produkt" />
+          <select id="dictCatSelect" aria-label="Kategoria"></select>
+          <button class="primary" id="btnDictAdd"><i class="ti ti-plus" aria-hidden="true"></i> Dodaj</button>
+        </div>
+      </div>
 
-  </section>
+      <div id="itemsList" aria-live="polite" aria-label="Lista produktów"></div>
+    </section>
 
-  <!-- ── TRYB SKLEPU ─────────────────────────────────────────────────────────── -->
-  <section id="shopSection" class="hidden">
-    <div class="shop-header" id="shopProgress" aria-live="polite"></div>
-    <div id="shopList" aria-live="polite" aria-label="Produkty do kupienia"></div>
-  </section>
+    <section id="shopSection" class="hidden">
+      <div class="shop-header" id="shopProgress" aria-live="polite"></div>
+      <div id="shopList" aria-live="polite" aria-label="Produkty do kupienia"></div>
+    </section>
+
+  </div>
 
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
