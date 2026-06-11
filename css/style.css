@@ -551,3 +551,47 @@ button.primary:active { opacity: .7; transform: scale(.98); }
   flex-shrink: 0;
 }
 .btn-back:hover { background: var(--bg); }
+
+/* ── Wybór sklepu ──────────────────────────────────────────────────────────── */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 1rem 2rem;
+}
+.store-tile {
+  border-radius: 18px;
+  padding: 18px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 140px;
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  transition: opacity .15s, transform .1s;
+  position: relative;
+  overflow: hidden;
+}
+.store-tile:active { opacity: .82; transform: scale(.97); }
+.store-tile-wide {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  min-height: 72px;
+  padding: 14px 16px;
+  gap: 14px;
+}
+.store-logo {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800;
+  letter-spacing: -.5px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+}
+.store-tile-wide .store-logo { margin-bottom: 0; width: 44px; height: 44px; border-radius: 12px; font-size: 13px; }
+.store-tile-name { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
+.store-tile-sub  { font-size: 12px; margin-top: 3px; }
+.store-tile-arr  { font-size: 14px; opacity: .38; position: absolute; bottom: 12px; right: 12px; }

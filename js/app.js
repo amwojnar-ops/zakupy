@@ -11,9 +11,8 @@ import {
 let items           = [];
 let customDictItems = [];
 let nextId          = 1;
-let activeStore     = 'all';
-let mode            = 'list';   // 'list' | 'shop' | 'dict'
-let screen          = 'home';   // 'home' | 'app'
+let screen          = 'home';   // 'home' | 'list' | 'store' | 'dict'
+let activeStoreId   = null;     // dla ekranu sklepu
 let acIdx           = -1;
 
 const $ = id => document.getElementById(id);
@@ -30,30 +29,45 @@ function showToast(msg) {
 
 // ─── Połączenie ───────────────────────────────────────────────────────────────
 function setConnected(ok) {
-  ['connDot','connDot2'].forEach(id => {
-    const d = $(id);
-    if (d) d.style.background = ok ? '#22c55e' : '#e24b4a';
-  });
-  ['connLabel','connLabel2'].forEach(id => {
-    const l = $(id);
-    if (l) l.textContent = ok ? 'połączono' : 'łączenie…';
-  });
+  document.querySelectorAll('.conn-dot').forEach(d => d.style.background = ok ? '#22c55e' : '#e24b4a');
+  document.querySelectorAll('.conn-lbl').forEach(l => l.textContent = ok ? 'połączono' : 'łączenie…');
 }
 
-// ─── Nawigacja ekranów ────────────────────────────────────────────────────────
+// ─── Nawigacja ────────────────────────────────────────────────────────────────
+function showOnly(id) {
+  ['homeScreen','listScreen','storeSelectScreen','storeShopScreen','dictScreen']
+    .forEach(s => $(s).classList.toggle('hidden', s !== id));
+}
+
 function goHome() {
   screen = 'home';
-  $('homeScreen').classList.remove('hidden');
-  $('appScreen').classList.add('hidden');
+  showOnly('homeScreen');
   renderHome();
 }
 
-function goApp(targetMode) {
-  screen = 'app';
-  mode = targetMode ?? 'list';
-  $('homeScreen').classList.add('hidden');
-  $('appScreen').classList.remove('hidden');
-  render();
+function goList() {
+  screen = 'list';
+  showOnly('listScreen');
+  renderList();
+}
+
+function goStoreSelect() {
+  screen = 'storeSelect';
+  showOnly('storeSelectScreen');
+  renderStoreSelect();
+}
+
+function goStoreShop(storeId) {
+  screen = 'storeShop';
+  activeStoreId = storeId;
+  showOnly('storeShopScreen');
+  renderStoreShop();
+}
+
+function goDict() {
+  screen = 'dict';
+  showOnly('dictScreen');
+  renderDictScreen();
 }
 
 // ─── Selekty ──────────────────────────────────────────────────────────────────
@@ -61,31 +75,28 @@ function buildSelects() {
   const ss = $('inputStore');
   ss.innerHTML = '';
   STORES.forEach(s => ss.append(new Option(s.label, s.id)));
-
   const sc = $('inputCat');
   sc.innerHTML = '';
   CATS.forEach(c => sc.append(new Option(c.label, c.id)));
-
   const dc = $('dictCatSelect');
   dc.innerHTML = '';
   CATS.forEach(c => dc.append(new Option(c.label, c.id)));
 }
 
-// ─── Autocomplete ──────────────────────────────────────────────────────────────
+// ─── Autocomplete ─────────────────────────────────────────────────────────────
 function onNameInput() {
   const v = $('inputName').value;
   if (v.length > 1) $('inputCat').value = guessCat(v);
   renderAC(v);
 }
-
 function renderAC(q) {
-  const dd    = $('acDrop');
+  const dd = $('acDrop');
   const suggs = getSuggestions(q, customDictItems);
   if (!suggs.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = '';
   acIdx = -1;
   suggs.forEach(([name, catId]) => {
-    const cat  = CATS.find(c => c.id === catId) ?? CATS.at(-1);
+    const cat = CATS.find(c => c.id === catId) ?? CATS.at(-1);
     const item = document.createElement('div');
     item.className = 'ac-item';
     item.innerHTML = `<span>${name}</span><span class="ac-cat-badge ${cat.cls}">${cat.label}</span>`;
@@ -94,29 +105,23 @@ function renderAC(q) {
   });
   dd.style.display = 'block';
 }
-
 function pickAC(name, catId) {
   $('inputName').value = name;
   $('inputCat').value  = catId;
   $('acDrop').style.display = 'none';
   acIdx = -1;
 }
-
 function onNameKey(e) {
-  const dd  = $('acDrop');
+  const dd = $('acDrop');
   const els = dd.querySelectorAll('.ac-item');
-  if (e.key === 'ArrowDown')  { e.preventDefault(); acIdx = Math.min(acIdx + 1, els.length - 1); highlightAC(els); }
-  else if (e.key === 'ArrowUp')    { e.preventDefault(); acIdx = Math.max(acIdx - 1, -1); highlightAC(els); }
+  if (e.key === 'ArrowDown')  { e.preventDefault(); acIdx = Math.min(acIdx+1, els.length-1); highlightAC(els); }
+  else if (e.key === 'ArrowUp')    { e.preventDefault(); acIdx = Math.max(acIdx-1, -1); highlightAC(els); }
   else if (e.key === 'Enter') {
     if (acIdx >= 0 && els[acIdx]) { e.preventDefault(); els[acIdx].dispatchEvent(new MouseEvent('mousedown')); }
     else { dd.style.display = 'none'; addItem(); }
   } else if (e.key === 'Escape') { dd.style.display = 'none'; acIdx = -1; }
 }
-
-function highlightAC(els) {
-  els.forEach((e, i) => e.classList.toggle('ac-sel', i === acIdx));
-}
-
+function highlightAC(els) { els.forEach((e,i) => e.classList.toggle('ac-sel', i===acIdx)); }
 document.addEventListener('click', e => {
   if (!e.target.closest('.name-wrap')) { $('acDrop').style.display = 'none'; acIdx = -1; }
 });
@@ -125,19 +130,16 @@ document.addEventListener('click', e => {
 async function addItem() {
   const name = $('inputName').value.trim();
   if (!name) { $('inputName').focus(); return; }
-  const item = {
-    id: nextId, name,
-    qty:   $('inputQty').value || '1',
+  const item = { id: nextId, name,
+    qty: $('inputQty').value || '1',
     store: $('inputStore').value,
-    cat:   $('inputCat').value,
-    done:  false,
-    addedAt: Date.now(),
-  };
+    cat: $('inputCat').value,
+    done: false, addedAt: Date.now() };
   nextId++;
   await saveMeta({ nextId });
   await saveItem(item);
   $('inputName').value = '';
-  $('inputQty').value  = '1';
+  $('inputQty').value = '1';
   $('acDrop').style.display = 'none';
   $('inputName').focus();
 }
@@ -159,26 +161,8 @@ async function doClearDone() {
 }
 
 function doCopy() {
-  const ok = exportToClipboard(items, activeStore);
+  const ok = exportToClipboard(items, 'all');
   showToast(ok ? 'Lista skopiowana do schowka' : 'Brak produktów do skopiowania');
-}
-
-function setMode(m) {
-  mode = m;
-  $('btnList').classList.toggle('active', m === 'list');
-  $('btnShop').classList.toggle('active', m === 'shop');
-  $('listSection').classList.toggle('hidden', m !== 'list');
-  $('shopSection').classList.toggle('hidden', m !== 'shop');
-  render();
-}
-
-function setStore(id) {
-  activeStore = id;
-  render();
-}
-
-function filteredItems() {
-  return activeStore === 'all' ? items : items.filter(i => i.store === activeStore);
 }
 
 async function addDictItem() {
@@ -192,86 +176,40 @@ async function addDictItem() {
   $('dictName').value = '';
   showToast(`Dodano „${name}" do słownika`);
 }
-
-async function doRemoveDictItem(name) {
-  await removeDictItem(name);
-}
+async function doRemoveDictItem(name) { await removeDictItem(name); }
 window._removeDict = doRemoveDictItem;
 
 // ─── Render: ekran główny ─────────────────────────────────────────────────────
 function renderHome() {
   const rem   = items.filter(i => !i.done).length;
   const total = items.length;
-
-  // liczniki per sklep
-  const storeCounts = STORES.map(s => ({
-    ...s,
-    count: items.filter(i => i.store === s.id && !i.done).length,
-  })).filter(s => s.count > 0);
-
+  const storeCounts = STORES
+    .map(s => ({ ...s, count: items.filter(i => i.store === s.id && !i.done).length }))
+    .filter(s => s.count > 0);
   const pills = storeCounts.map(s =>
     `<span class="home-pill" style="background:${s.dot}22;color:${s.dot}">${s.label} ${s.count}</span>`
   ).join('');
-
-  const now  = new Date();
+  const now = new Date();
   const days = ['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
   const months = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
-  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-
-  $('homeDate').textContent   = dateStr;
+  $('homeDate').textContent    = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
   $('homeTileCount').textContent = rem;
-  $('homeTileSub').textContent   = total > 0
-    ? `${total} produktów łącznie`
-    : 'Lista jest pusta';
+  $('homeTileSub').textContent   = total > 0 ? `${total} produktów łącznie` : 'Lista jest pusta';
   $('homePills').innerHTML = pills || `<span style="font-size:12px;opacity:.5">brak produktów</span>`;
-
-  // dict count
-  const dictTotal = customDictItems.length;
-  $('homeDictSub').textContent = dictTotal > 0
-    ? `${dictTotal} własnych wpisów`
-    : 'brak własnych wpisów';
+  $('homeDictSub').textContent = customDictItems.length > 0
+    ? `${customDictItems.length} własnych wpisów` : 'brak własnych wpisów';
 }
 
-// ─── Render: store tabs ───────────────────────────────────────────────────────
-function renderStoreTabs() {
-  const el = $('storeTabs');
-  el.innerHTML = '';
-  [{ id: 'all', label: 'Wszystkie', dot: null }, ...STORES].forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'store-tab' + (activeStore === s.id ? ' active' : '');
-    if (s.dot) {
-      const dot = document.createElement('span');
-      dot.className = 'store-dot';
-      dot.style.background = s.dot;
-      btn.appendChild(dot);
-    }
-    const rem = s.id === 'all'
-      ? items.filter(i => !i.done).length
-      : items.filter(i => i.store === s.id && !i.done).length;
-    btn.appendChild(document.createTextNode(s.label + (rem > 0 ? ` (${rem})` : '')));
-    btn.addEventListener('click', () => setStore(s.id));
-    el.appendChild(btn);
-  });
-}
-
-function renderSummary(fi) {
-  const rem  = fi.filter(i => !i.done).length;
-  const done = fi.filter(i =>  i.done).length;
-  $('summaryStrip').innerHTML = `
-    <div class="stat-pill"><div class="stat-val">${rem}</div><div class="stat-lbl">Do kupienia</div></div>
-    <div class="stat-pill"><div class="stat-val">${done}</div><div class="stat-lbl">Kupione</div></div>
-    <div class="stat-pill"><div class="stat-val">${fi.length}</div><div class="stat-lbl">Łącznie</div></div>`;
-}
-
-function renderList(fi) {
-  const con = $('itemsList');
-  if (!fi.length) {
-    con.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Lista jest pusta. Dodaj pierwszy produkt powyżej.</div>';
+// ─── Render: ekran listy (dodawanie) ─────────────────────────────────────────
+function renderList() {
+  const con = $('listItems');
+  if (!items.length) {
+    con.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Lista jest pusta.</div>';
     return;
   }
   con.innerHTML = '';
   CATS.forEach(cat => {
-    const arr = [...fi.filter(i => i.cat === cat.id)].sort((a, b) => Number(a.done) - Number(b.done));
+    const arr = [...items.filter(i => i.cat === cat.id)].sort((a,b) => Number(a.done)-Number(b.done));
     if (!arr.length) return;
     const grp = document.createElement('div');
     grp.className = 'cat-group';
@@ -282,38 +220,103 @@ function renderList(fi) {
       const card  = document.createElement('div');
       card.className = 'item-card' + (item.done ? ' done' : '');
       card.innerHTML = `
-        <button class="item-check ${item.done ? 'checked' : ''}" data-id="${item.id}" aria-label="${item.done ? 'Odznacz' : 'Oznacz jako kupione'}">
+        <button class="item-check ${item.done?'checked':''}" data-id="${item.id}" aria-label="Przełącz status">
           <i class="ti ti-check" aria-hidden="true"></i>
         </button>
         <div class="item-body">
           <div class="item-name">${item.name}</div>
-          <div class="item-meta">
-            <span>${item.qty} szt.</span>
+          <div class="item-meta"><span>${item.qty} szt.</span>
             <span class="store-pill" style="background:${store.bg};color:${store.fg}">${store.label}</span>
           </div>
         </div>
-        <button class="btn-icon" data-del="${item.id}" aria-label="Usuń produkt"><i class="ti ti-trash" aria-hidden="true"></i></button>`;
+        <button class="btn-icon" data-del="${item.id}" aria-label="Usuń"><i class="ti ti-trash" aria-hidden="true"></i></button>`;
       grp.appendChild(card);
     });
     con.appendChild(grp);
   });
-  con.querySelectorAll('[data-id]').forEach(b  => b.addEventListener('click', () => toggleDone(+b.dataset.id)));
+  con.querySelectorAll('[data-id]').forEach(b => b.addEventListener('click', () => toggleDone(+b.dataset.id)));
   con.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => doDeleteItem(+b.dataset.del)));
 }
 
-function renderShop(fi) {
+// ─── Render: wybór sklepu ─────────────────────────────────────────────────────
+function renderStoreSelect() {
+  const con = $('storeGrid');
+  const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  con.innerHTML = '';
+  STORES.forEach((s, idx) => {
+    const count = items.filter(i => i.store === s.id && !i.done).length;
+    const bg  = darkMode ? s.tileBgDark  : s.tileBgLight;
+    const fg  = darkMode ? s.tileFgDark  : s.tileFgLight;
+    const sub = darkMode ? s.tileSubDark : s.tileSubLight;
+    const isWide = idx === STORES.length - 1;  // "Inne" — pełna szerokość
+
+    const tile = document.createElement('button');
+    tile.className = 'store-tile' + (isWide ? ' store-tile-wide' : '');
+    tile.style.cssText = `background:${bg};color:${fg}`;
+    tile.setAttribute('aria-label', `${s.label} — ${count} produktów`);
+
+    // Logo circle
+    let logoInner = '';
+    if (s.id === 'lidl') {
+      logoInner = `<span style="color:#fff">Li</span><span style="color:#FFCC00">dl</span>`;
+    } else if (s.id === 'inny') {
+      logoInner = `<i class="ti ti-dots-circle-horizontal" aria-hidden="true"></i>`;
+    } else {
+      logoInner = s.logoLabel;
+    }
+
+    if (isWide) {
+      tile.innerHTML = `
+        <div class="store-logo" style="background:${s.logoBg};color:${s.logoFg};flex-shrink:0">${logoInner}</div>
+        <div style="flex:1">
+          <div class="store-tile-name">${s.label}</div>
+          <div class="store-tile-sub" style="color:${sub}">${count > 0 ? count+' produktów' : 'brak produktów'}</div>
+        </div>
+        <i class="ti ti-arrow-right" style="opacity:.35;font-size:18px;flex-shrink:0" aria-hidden="true"></i>`;
+    } else {
+      tile.innerHTML = `
+        <div class="store-logo" style="background:${s.logoBg};color:${s.logoFg}">${logoInner}</div>
+        <div class="store-tile-name">${s.label}</div>
+        <div class="store-tile-sub" style="color:${sub}">${count > 0 ? count+' produktów' : 'brak'}</div>
+        <i class="ti ti-arrow-right store-tile-arr" aria-hidden="true"></i>`;
+    }
+
+    tile.addEventListener('click', () => goStoreShop(s.id));
+    con.appendChild(tile);
+  });
+}
+
+// ─── Render: tryb sklepu (tylko odhaczanie) ───────────────────────────────────
+function renderStoreShop() {
+  const store = STORES.find(s => s.id === activeStoreId) ?? STORES.at(-1);
+  const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const fg = darkMode ? store.tileFgDark : store.tileFgLight;
+
+  // nagłówek
+  $('storeShopName').textContent = store.label;
+  $('storeShopName').style.color = fg;
+
+  const fi = items.filter(i => i.store === activeStoreId);
   const undone = fi.filter(i => !i.done).length;
   const total  = fi.length;
   const pct    = total > 0 ? Math.round((total - undone) / total * 100) : 0;
-  $('shopProgress').innerHTML = `
+
+  $('storeShopProgress').innerHTML = `
     <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
     <span class="progress-text">${total - undone} / ${total}</span>`;
-  const con = $('shopList');
-  if (!fi.length) { con.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Lista jest pusta.</div>'; return; }
-  if (!undone)    { con.innerHTML = '<div class="shop-done-banner"><i class="ti ti-circle-check" aria-hidden="true"></i>Wszystko kupione!</div>'; return; }
+
+  const con = $('storeShopList');
+  if (!fi.length) {
+    con.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Brak produktów dla tego sklepu.<br>Dodaj je w widoku listy.</div>';
+    return;
+  }
+  if (!undone) {
+    con.innerHTML = '<div class="shop-done-banner"><i class="ti ti-circle-check" aria-hidden="true"></i>Wszystko kupione!</div>';
+    return;
+  }
   con.innerHTML = '';
   CATS.forEach(cat => {
-    const arr = [...fi.filter(i => i.cat === cat.id)].sort((a, b) => Number(a.done) - Number(b.done));
+    const arr = [...fi.filter(i => i.cat === cat.id)].sort((a,b) => Number(a.done)-Number(b.done));
     if (!arr.length) return;
     const grp = document.createElement('div');
     grp.className = 'shop-group';
@@ -324,15 +327,27 @@ function renderShop(fi) {
       div.innerHTML = `
         <div class="shop-check"><i class="ti ti-check" aria-hidden="true"></i></div>
         <span class="shop-item-name">${item.name}</span>
-        <span class="shop-item-qty">${item.qty} szt.</span>`;
-      div.addEventListener('click', () => toggleDone(item.id));
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="shop-item-qty">${item.qty} szt.</span>
+          <button class="btn-icon" data-del="${item.id}" aria-label="Usuń" style="width:26px;height:26px;font-size:14px">
+            <i class="ti ti-trash" aria-hidden="true"></i>
+          </button>
+        </div>`;
+      div.querySelector('.shop-check').parentElement.addEventListener('click', e => {
+        if (!e.target.closest('[data-del]')) toggleDone(item.id);
+      });
       grp.appendChild(div);
     });
     con.appendChild(grp);
   });
+  con.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    doDeleteItem(+b.dataset.del);
+  }));
 }
 
-function renderDictTags() {
+// ─── Render: słownik ──────────────────────────────────────────────────────────
+function renderDictScreen() {
   const list = $('dictTagList');
   list.innerHTML = '';
   if (!customDictItems.length) {
@@ -341,25 +356,20 @@ function renderDictTags() {
   }
   customDictItems.forEach(({ name, cat }) => {
     const catDef = CATS.find(c => c.id === cat) ?? CATS.at(-1);
-    const tag    = document.createElement('span');
+    const tag = document.createElement('span');
     tag.className = `dict-tag ${catDef.cls}`;
-    tag.innerHTML = `${name} <button aria-label="Usuń ${name}" onclick="window._removeDict('${name.replace(/'/g, "\\'")}')">×</button>`;
+    tag.innerHTML = `${name} <button aria-label="Usuń ${name}" onclick="window._removeDict('${name.replace(/'/g,"\\'")}')">×</button>`;
     list.appendChild(tag);
   });
 }
 
+// ─── Główny render (po każdej zmianie Firebase) ───────────────────────────────
 function render() {
-  if (screen === 'home') { renderHome(); return; }
-  renderStoreTabs();
-  const fi = filteredItems();
-  renderSummary(fi);
-  renderList(fi);
-  renderShop(fi);
-  renderDictTags();
-  $('btnList').classList.toggle('active', mode === 'list');
-  $('btnShop').classList.toggle('active', mode === 'shop');
-  $('listSection').classList.toggle('hidden', mode !== 'list');
-  $('shopSection').classList.toggle('hidden', mode !== 'shop');
+  renderHome();
+  if (screen === 'list')        renderList();
+  if (screen === 'storeSelect') renderStoreSelect();
+  if (screen === 'storeShop')   renderStoreShop();
+  if (screen === 'dict')        renderDictScreen();
 }
 
 // ─── Firebase ─────────────────────────────────────────────────────────────────
@@ -367,9 +377,9 @@ function initFirebase() {
   setConnected(false);
   subscribeToData(({ type, items: newItems, customDict, meta }) => {
     setConnected(true);
-    if (type === 'items')  { items           = newItems ?? []; }
-    if (type === 'dict')   { customDictItems = customDict ?? []; }
-    if (type === 'meta')   { nextId          = (meta?.nextId ?? 1); }
+    if (type === 'items')  items           = newItems ?? [];
+    if (type === 'dict')   customDictItems = customDict ?? [];
+    if (type === 'meta')   nextId          = meta?.nextId ?? 1;
     render();
   });
 }
@@ -379,37 +389,26 @@ function init() {
   buildSelects();
 
   // home tiles
-  $('tileList').addEventListener('click',  () => goApp('list'));
-  $('tileShop').addEventListener('click',  () => goApp('shop'));
-  $('tileDict').addEventListener('click',  () => {
-    goApp('list');
-    setTimeout(() => {
-      const p = $('dictPanel');
-      p.classList.remove('hidden');
-      $('btnDictToggle').querySelector('i').className = 'ti ti-book-open';
-      p.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
-  });
+  $('tileList').addEventListener('click',  goList);
+  $('tileShop').addEventListener('click',  goStoreSelect);
+  $('tileDict').addEventListener('click',  goDict);
 
-  // back button
-  $('btnBack').addEventListener('click', goHome);
+  // back buttons
+  $('btnBackList').addEventListener('click',       goHome);
+  $('btnBackStoreSelect').addEventListener('click', goHome);
+  $('btnBackStoreShop').addEventListener('click',   goStoreSelect);
+  $('btnBackDict').addEventListener('click',        goHome);
 
-  // app controls
+  // list actions
   $('inputName').addEventListener('input',   onNameInput);
   $('inputName').addEventListener('keydown', onNameKey);
   $('btnAdd').addEventListener('click',       addItem);
-  $('btnList').addEventListener('click',      () => setMode('list'));
-  $('btnShop').addEventListener('click',      () => setMode('shop'));
   $('btnClearDone').addEventListener('click', doClearDone);
   $('btnCopy').addEventListener('click',      doCopy);
-  $('btnDictAdd').addEventListener('click',   addDictItem);
-  $('dictName').addEventListener('keydown',   e => { if (e.key === 'Enter') addDictItem(); });
-  $('btnDictToggle').addEventListener('click', () => {
-    const p = $('dictPanel');
-    p.classList.toggle('hidden');
-    $('btnDictToggle').querySelector('i').className =
-      p.classList.contains('hidden') ? 'ti ti-book' : 'ti ti-book-open';
-  });
+
+  // dict
+  $('btnDictAdd').addEventListener('click', addDictItem);
+  $('dictName').addEventListener('keydown', e => { if (e.key === 'Enter') addDictItem(); });
 
   initFirebase();
 }
