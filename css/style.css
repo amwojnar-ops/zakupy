@@ -595,3 +595,41 @@ button.primary:active { opacity: .7; transform: scale(.98); }
 .store-tile-name { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
 .store-tile-sub  { font-size: 12px; margin-top: 3px; }
 .store-tile-arr  { font-size: 14px; opacity: .38; position: absolute; bottom: 12px; right: 12px; }
+
+/* ── Spis list ─────────────────────────────────────────────────────────────── */
+.new-list-bar  { padding: 0 1rem .75rem; }
+.new-list-form {
+  padding: 0 1rem .75rem;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.new-list-form input { flex: 1; min-width: 160px; }
+
+.list-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+  margin: 0 1rem .75rem;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.list-card:hover { border-color: var(--border-md); }
+.list-card:active { opacity: .85; }
+.list-card-top {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: .5rem;
+}
+.list-card-name  { font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
+.list-card-empty { font-size: 12px; color: var(--text-3); margin-top: .25rem; }
+.list-card-progress {
+  display: flex; align-items: center; gap: 10px; margin-bottom: .5rem;
+}
+.list-card-count { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.list-store-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.list-store-pill  {
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 500;
+}
+.list-del-btn { color: var(--text-3); }
+.list-del-btn:hover { color: #e24b4a; }

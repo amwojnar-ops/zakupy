@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lista zakupów</title>
   <meta name="theme-color" content="#f9f8f6" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#18181a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#18181a"  media="(prefers-color-scheme: dark)" />
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -28,97 +28,109 @@
         <div class="home-title">Lista zakupów</div>
       </div>
       <div class="conn-row">
-        <span class="conn-dot"></span>
-        <span class="conn-lbl">łączenie…</span>
+        <span class="conn-dot"></span><span class="conn-lbl">łączenie…</span>
       </div>
     </header>
-    <button class="home-tile tile-green" id="tileList" aria-label="Lista zakupów">
-      <div class="tile-icon-wrap"><i class="ti ti-shopping-cart" aria-hidden="true"></i></div>
-      <div class="tile-content">
-        <div class="tile-label">Do kupienia</div>
-        <div class="tile-count" id="homeTileCount">0</div>
-        <div class="tile-sub" id="homeTileSub">produktów</div>
-      </div>
+    <button class="home-tile tile-green" id="tileList">
+      <div class="tile-icon-wrap"><i class="ti ti-clipboard-list"></i></div>
+      <div class="tile-label">Do kupienia</div>
+      <div class="tile-count" id="homeTileCount">0</div>
+      <div class="tile-sub" id="homeTileSub">produktów</div>
       <div class="tile-pills" id="homePills"></div>
-      <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+      <i class="ti ti-arrow-right tile-arr"></i>
     </button>
     <div class="home-row">
-      <button class="home-tile tile-blue tile-half" id="tileShop" aria-label="Sklepy">
-        <i class="ti ti-building-store tile-icon-sm" aria-hidden="true"></i>
+      <button class="home-tile tile-blue tile-half" id="tileShop">
+        <i class="ti ti-building-store tile-icon-sm"></i>
         <div class="tile-label">Sklepy</div>
         <div class="tile-sub">tryb zakupów</div>
-        <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+        <i class="ti ti-arrow-right tile-arr"></i>
       </button>
-      <button class="home-tile tile-amber tile-half" id="tileDict" aria-label="Słownik produktów">
-        <i class="ti ti-book tile-icon-sm" aria-hidden="true"></i>
+      <button class="home-tile tile-amber tile-half" id="tileDict">
+        <i class="ti ti-book tile-icon-sm"></i>
         <div class="tile-label">Słownik</div>
         <div class="tile-sub" id="homeDictSub">produkty i kat.</div>
-        <i class="ti ti-arrow-right tile-arr" aria-hidden="true"></i>
+        <i class="ti ti-arrow-right tile-arr"></i>
       </button>
     </div>
   </div>
 
-  <!-- ══ EKRAN LISTY (dodawanie + podgląd wszystkich) ════════════════════════ -->
-  <div id="listScreen" class="hidden">
+  <!-- ══ SPIS LIST ═════════════════════════════════════════════════════════════ -->
+  <div id="listsScreen" class="hidden">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn-back" id="btnBackList" aria-label="Wróć"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
-        <div class="topbar-title"><i class="ti ti-shopping-cart" aria-hidden="true"></i> Do kupienia</div>
+        <button class="btn-back" id="btnBackLists"><i class="ti ti-arrow-left"></i></button>
+        <div class="topbar-title"><i class="ti ti-clipboard-list"></i> Listy zakupów</div>
       </div>
-      <div class="conn-row">
-        <span class="conn-dot"></span>
-        <span class="conn-lbl">łączenie…</span>
-      </div>
+      <div class="conn-row"><span class="conn-dot"></span><span class="conn-lbl">łączenie…</span></div>
     </header>
+
+    <!-- Nowa lista -->
+    <div class="new-list-bar">
+      <button class="primary" id="btnShowNewList" style="width:100%">
+        <i class="ti ti-plus"></i> Nowa lista
+      </button>
+    </div>
+    <div class="new-list-form hidden" id="newListForm">
+      <input type="text" id="newListName" placeholder="Nazwa listy, np. Zakupy na sobotę…" />
+      <button class="primary" id="btnCreateList"><i class="ti ti-check"></i> Utwórz</button>
+    </div>
+
+    <div id="listsContainer"></div>
+  </div>
+
+  <!-- ══ SZCZEGÓŁY LISTY ═══════════════════════════════════════════════════════ -->
+  <div id="listDetailScreen" class="hidden">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-back" id="btnBackListDetail"><i class="ti ti-arrow-left"></i></button>
+        <div class="topbar-title" id="listDetailName"></div>
+      </div>
+      <div class="conn-row"><span class="conn-dot"></span><span class="conn-lbl">łączenie…</span></div>
+    </header>
+    <div class="summary-strip" id="listDetailSummary"></div>
     <div class="add-panel" role="form">
       <div class="add-row">
         <div class="name-wrap">
-          <input type="text" id="inputName" placeholder="Wpisz produkt…" autocomplete="off" aria-label="Nazwa produktu" />
+          <input type="text" id="inputName" placeholder="Wpisz produkt…" autocomplete="off" />
           <div class="ac-drop" id="acDrop" role="listbox"></div>
         </div>
-        <input type="number" id="inputQty" value="1" min="1" max="99" aria-label="Ilość" />
+        <input type="number" id="inputQty" value="1" min="1" max="99" />
       </div>
       <div class="add-row">
-        <select id="inputStore" aria-label="Sklep"></select>
-        <select id="inputCat" aria-label="Kategoria"></select>
-        <button class="primary" id="btnAdd"><i class="ti ti-plus" aria-hidden="true"></i> Dodaj</button>
+        <select id="inputStore"></select>
+        <select id="inputCat"></select>
+        <button class="primary" id="btnAdd"><i class="ti ti-plus"></i> Dodaj</button>
       </div>
     </div>
     <div class="toolbar">
       <div class="toolbar-left">
-        <button class="btn-sm" id="btnClearDone"><i class="ti ti-trash" aria-hidden="true"></i> Usuń kupione</button>
-        <button class="btn-sm" id="btnCopy"><i class="ti ti-copy" aria-hidden="true"></i> Kopiuj listę</button>
+        <button class="btn-sm" id="btnClearDone"><i class="ti ti-trash"></i> Usuń kupione</button>
       </div>
     </div>
-    <div id="listItems" aria-live="polite"></div>
+    <div id="listDetailItems" aria-live="polite"></div>
   </div>
 
   <!-- ══ WYBÓR SKLEPU ══════════════════════════════════════════════════════════ -->
   <div id="storeSelectScreen" class="hidden">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn-back" id="btnBackStoreSelect" aria-label="Wróć"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
-        <div class="topbar-title"><i class="ti ti-building-store" aria-hidden="true"></i> Wybierz sklep</div>
+        <button class="btn-back" id="btnBackStoreSelect"><i class="ti ti-arrow-left"></i></button>
+        <div class="topbar-title"><i class="ti ti-building-store"></i> Wybierz sklep</div>
       </div>
-      <div class="conn-row">
-        <span class="conn-dot"></span>
-        <span class="conn-lbl">łączenie…</span>
-      </div>
+      <div class="conn-row"><span class="conn-dot"></span><span class="conn-lbl">łączenie…</span></div>
     </header>
     <div class="store-grid" id="storeGrid"></div>
   </div>
 
-  <!-- ══ TRYB SKLEPU (tylko odhaczanie) ══════════════════════════════════════ -->
+  <!-- ══ TRYB SKLEPU ══════════════════════════════════════════════════════════ -->
   <div id="storeShopScreen" class="hidden">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn-back" id="btnBackStoreShop" aria-label="Wróć do sklepów"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+        <button class="btn-back" id="btnBackStoreShop"><i class="ti ti-arrow-left"></i></button>
         <div class="topbar-title" id="storeShopName"></div>
       </div>
-      <div class="conn-row">
-        <span class="conn-dot"></span>
-        <span class="conn-lbl">łączenie…</span>
-      </div>
+      <div class="conn-row"><span class="conn-dot"></span><span class="conn-lbl">łączenie…</span></div>
     </header>
     <div class="shop-header" id="storeShopProgress"></div>
     <div id="storeShopList" aria-live="polite"></div>
@@ -128,17 +140,17 @@
   <div id="dictScreen" class="hidden">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn-back" id="btnBackDict" aria-label="Wróć"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
-        <div class="topbar-title"><i class="ti ti-book" aria-hidden="true"></i> Słownik produktów</div>
+        <button class="btn-back" id="btnBackDict"><i class="ti ti-arrow-left"></i></button>
+        <div class="topbar-title"><i class="ti ti-book"></i> Słownik produktów</div>
       </div>
     </header>
-    <div class="dict-panel" id="dictPanel" style="margin:0 0 1rem">
+    <div class="dict-panel" style="margin:0 0 1rem">
       <h3>Moje produkty</h3>
       <div class="dict-tag-list" id="dictTagList"></div>
       <div class="dict-add-row" style="margin-top:.75rem">
-        <input type="text" id="dictName" placeholder="Nazwa produktu…" aria-label="Nowy produkt" />
-        <select id="dictCatSelect" aria-label="Kategoria"></select>
-        <button class="primary" id="btnDictAdd"><i class="ti ti-plus" aria-hidden="true"></i> Dodaj</button>
+        <input type="text" id="dictName" placeholder="Nazwa produktu…" />
+        <select id="dictCatSelect"></select>
+        <button class="primary" id="btnDictAdd"><i class="ti ti-plus"></i> Dodaj</button>
       </div>
     </div>
   </div>
@@ -147,21 +159,17 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js")
-    .then(reg => {
-      reg.addEventListener("updatefound", () => {
-        const sw = reg.installing;
-        sw.addEventListener("statechange", () => {
-          if (sw.state === "installed" && navigator.serviceWorker.controller) {
-            sw.postMessage({ type: "SKIP_WAITING" });
-            window.location.reload();
-          }
-        });
+  navigator.serviceWorker.register("./sw.js").then(reg => {
+    reg.addEventListener("updatefound", () => {
+      const sw = reg.installing;
+      sw.addEventListener("statechange", () => {
+        if (sw.state === "installed" && navigator.serviceWorker.controller) {
+          window.location.reload();
+        }
       });
     });
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    window.location.reload();
   });
+  navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
 }
 </script>
 <script type="module" src="js/app.js"></script>
